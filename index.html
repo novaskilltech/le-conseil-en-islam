@@ -198,10 +198,11 @@
             <span>Salah Eddine Abou Soulaymane</span>
             <span>23 pages</span>
             <span>Format PDF</span>
+            <span><strong id="dl-count">—</strong> téléchargements</span>
           </div>
           <div class="actions">
-            <a class="btn btn-primary" href="le-conseil-en-islam.pdf" target="_blank" rel="noopener">Lire gratuitement <span aria-hidden="true">↗</span></a>
-            <a class="btn btn-outline" href="le-conseil-en-islam.pdf" download="Le-conseil-en-islam.pdf">↓ Télécharger le PDF</a>
+            <a class="btn btn-primary" href="le-conseil-en-islam.pdf" target="_blank" rel="noopener" data-dl-trigger>Lire gratuitement <span aria-hidden="true">↗</span></a>
+            <a class="btn btn-outline" href="le-conseil-en-islam.pdf" download="Le-conseil-en-islam.pdf" data-dl-trigger>↓ Télécharger le PDF</a>
             <a class="btn btn-outline" id="wa-btn" href="https://wa.me/?text=Le%20conseil%20en%20islam%20(PDF%20gratuit)%20%E2%80%94%20https%3A%2F%2Fle-conseil-en-islam.vercel.app%2F" target="_blank" rel="noopener">WhatsApp</a>
             <button type="button" class="btn btn-outline" id="share-btn">Partager</button>
           </div>
@@ -211,7 +212,7 @@
     </div>
   </main>
   <footer>
-    <div class="container">© 2026 · Le conseil en islam — Consultation et téléchargement gratuits.</div>
+    <div class="container">© 2026 · Le conseil en islam — Consultation et téléchargement gratuits · Visites : <strong id="visit-count">—</strong></div>
   </footer>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script>
@@ -240,6 +241,33 @@
         } catch (e) {
           if (e.name !== 'AbortError') notify('Partage indisponible sur cet appareil');
         }
+      });
+
+      const API = 'https://abacus.jasoncameron.dev';
+      const NS = 'le-conseil-en-islam-v1';
+      const fmt = (n) => Number(n || 0).toLocaleString('fr-FR');
+      const readCount = async (key) => {
+        try { const r = await fetch(`${API}/get/${NS}/${key}`); if (!r.ok) return 0; const d = await r.json(); return Number(d.value || 0); }
+        catch { return null; }
+      };
+      const hitCount = async (key) => {
+        try { const r = await fetch(`${API}/hit/${NS}/${key}`, { keepalive: true }); if (!r.ok) return null; const d = await r.json(); return Number(d.value || 0); }
+        catch { return null; }
+      };
+
+      const visitOut = document.getElementById('visit-count');
+      const vFlag = `visited_${NS}_visits`;
+      const vDone = sessionStorage.getItem(vFlag);
+      (vDone ? readCount('visits') : hitCount('visits')).then((v) => {
+        if (v !== null && visitOut) { visitOut.textContent = fmt(v); if (!vDone) sessionStorage.setItem(vFlag, '1'); }
+      });
+
+      const dlOut = document.getElementById('dl-count');
+      readCount('pdf-downloads').then((v) => { if (v !== null && dlOut) dlOut.textContent = fmt(v); });
+      document.querySelectorAll('[data-dl-trigger]').forEach((el) => {
+        el.addEventListener('click', () => {
+          hitCount('pdf-downloads').then((v) => { if (v !== null && dlOut) dlOut.textContent = fmt(v); });
+        });
       });
     })();
   </script>
